@@ -15,3 +15,5 @@ export interface CustomerResponse {
   email: string;
   birthday: string | null;
 }
+
+export type CustomerSeed = Omit<CustomerResponse, "id">;

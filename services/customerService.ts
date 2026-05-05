@@ -1,4 +1,4 @@
-import { CustomerResponse, CustomerType } from "@/types/customer";
+import { CustomerResponse, CustomerSeed, CustomerType } from "@/types/customer";
 import { mapCustomer, mapCustomerRequest } from "@/lib/customerMapper";
 
 const API = "/api/customers/demo";
@@ -50,4 +50,22 @@ export async function deleteCustomer(id: number): Promise<boolean> {
   const res = await fetch(`${API}/${id}`, { method: "DELETE" });
   await handle<{ ok: boolean }>(res);
   return true;
+}
+
+export async function importCustomers(
+  rows: CustomerSeed[]
+): Promise<{ imported: number; customers: CustomerType[] }> {
+  const res = await fetch(`${API}/import`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ rows }),
+  });
+  const data = await handle<{
+    imported: number;
+    customers: CustomerResponse[];
+  }>(res);
+  return {
+    imported: data.imported,
+    customers: data.customers.map(mapCustomer),
+  };
 }

@@ -10,6 +10,7 @@ import {
   createCustomer,
   deleteCustomer,
   getCustomers,
+  importCustomers,
   updateCustomer,
 } from "@/services/customerService";
 import { CustomerType } from "@/types/customer";
@@ -47,6 +48,15 @@ export function useDeleteCustomerMutation() {
     mutationFn: (id: number) => deleteCustomer(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
     onError: (err) => toast.error(`刪除香客失敗: ${String(err)}`),
+  });
+}
+
+export function useImportCustomersMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: importCustomers,
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
+    onError: (err) => toast.error(`匯入失敗: ${String(err)}`),
   });
 }
 

@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 import {
   useCreateCustomerMutation,
   useCustomersQuery,
   useDeleteCustomerMutation,
+  useImportCustomersMutation,
   useUpdateCustomerMutation,
 } from "@/hooks/useCustomers";
-import { CustomerType } from "@/types/customer";
+import { CustomerSeed, CustomerType } from "@/types/customer";
 
 const formatBirthday = (d: Date | null): string =>
   d ? d.toISOString().split("T")[0] : "";
@@ -20,25 +22,74 @@ type ModalState =
 export default function CustomersPage() {
   const { data, isLoading, isError, error } = useCustomersQuery();
   const deleteMutation = useDeleteCustomerMutation();
+  const importMutation = useImportCustomersMutation();
 
   const [modal, setModal] = useState<ModalState>({ open: false });
+  const [importErrors, setImportErrors] = useState<string[] | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const handleDelete = (c: CustomerType) => {
     if (!window.confirm(`確定刪除 ${c.name}？`)) return;
     deleteMutation.mutate(c.id);
   };
 
+  const handleImportClick = () => fileRef.current?.click();
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    let text: string;
+    try {
+      text = await file.text();
+    } catch (err) {
+      toast.error(`讀取檔案失敗: ${String(err)}`);
+      return;
+    }
+
+    const result = parseCustomerCsv(text);
+    if (result.errors.length > 0) {
+      setImportErrors(result.errors);
+      return;
+    }
+
+    try {
+      const { imported } = await importMutation.mutateAsync(result.rows);
+      toast.success(`匯入成功，共 ${imported} 筆`);
+    } catch {
+      // toast 已由 mutation onError 處理
+    }
+  };
+
   return (
     <main className="flex flex-1 flex-col gap-4 p-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">會員列表</h1>
-        <button
-          onClick={() => setModal({ open: true, mode: "create", initial: null })}
-          className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-        >
-          新增
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleImportClick}
+            disabled={importMutation.isPending}
+            className="rounded border border-zinc-300 px-4 py-2 hover:bg-zinc-100 disabled:opacity-50"
+          >
+            {importMutation.isPending ? "匯入中..." : "匯入 CSV"}
+          </button>
+          <button
+            onClick={() => setModal({ open: true, mode: "create", initial: null })}
+            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+          >
+            新增
+          </button>
+        </div>
       </div>
+
+      <input
+        ref={fileRef}
+        type="file"
+        accept=".csv,text/csv"
+        onChange={handleFile}
+        className="hidden"
+      />
 
       {isLoading && <p>載入中...</p>}
 
@@ -110,7 +161,112 @@ export default function CustomersPage() {
           onClose={() => setModal({ open: false })}
         />
       )}
+
+      {importErrors && (
+        <ImportErrorModal
+          errors={importErrors}
+          onClose={() => setImportErrors(null)}
+        />
+      )}
     </main>
+  );
+}
+
+const REQUIRED_HEADERS = ["name", "phone", "address", "email", "birthday"] as const;
+
+function parseCustomerCsv(
+  text: string
+): { rows: CustomerSeed[]; errors: string[] } {
+  const errors: string[] = [];
+  const cleaned = text.replace(/^﻿/, "").trim();
+  if (!cleaned) {
+    return { rows: [], errors: ["CSV 內容為空"] };
+  }
+
+  const lines = cleaned.split(/\r?\n/);
+  const headers = lines[0].split(",").map((h) => h.trim());
+  const missing = REQUIRED_HEADERS.filter((h) => !headers.includes(h));
+  if (missing.length > 0) {
+    return {
+      rows: [],
+      errors: [
+        `表頭缺少欄位: ${missing.join(", ")} (實際表頭: ${headers.join(", ")})`,
+      ],
+    };
+  }
+
+  const dataLines = lines.slice(1).filter((l) => l.trim() !== "");
+  if (dataLines.length === 0) {
+    return { rows: [], errors: ["CSV 沒有任何資料列"] };
+  }
+
+  const rows: CustomerSeed[] = [];
+  dataLines.forEach((line, idx) => {
+    const lineNo = idx + 1; // 0-indexed; +1 for 1-based, header不會算入列
+    const values = line.split(",").map((s) => s.trim());
+    const obj: Record<string, string> = {};
+    headers.forEach((h, i) => (obj[h] = values[i] ?? ""));
+
+    const rowErrors: string[] = [];
+    if (!obj.name) rowErrors.push("姓名為必填");
+    if (obj.birthday && !/^\d{4}-\d{2}-\d{2}$/.test(obj.birthday)) {
+      rowErrors.push(`生日格式應為 YYYY-MM-DD (實際: ${obj.birthday})`);
+    }
+    if (values.length !== headers.length) {
+      rowErrors.push(
+        `欄位數不符 (應 ${headers.length}, 實際 ${values.length})`
+      );
+    }
+
+    if (rowErrors.length > 0) {
+      errors.push(`第 ${lineNo} 列: ${rowErrors.join("；")}`);
+      return;
+    }
+
+    rows.push({
+      name: obj.name,
+      phone: obj.phone,
+      address: obj.address,
+      email: obj.email,
+      birthday: obj.birthday || null,
+    });
+  });
+
+  return errors.length > 0 ? { rows: [], errors } : { rows, errors: [] };
+}
+
+function ImportErrorModal({
+  errors,
+  onClose,
+}: {
+  errors: string[];
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="w-full max-w-lg rounded bg-white p-6 shadow-xl">
+        <h2 className="mb-2 text-xl font-semibold">匯入失敗</h2>
+        <p className="mb-4 text-sm text-zinc-600">
+          以下 {errors.length} 筆資料有問題，整批未匯入。請修正後重試。
+        </p>
+        <ul className="max-h-80 list-disc overflow-y-auto pl-6 text-sm">
+          {errors.map((err, i) => (
+            <li key={i} className="py-0.5">
+              {err}
+            </li>
+          ))}
+        </ul>
+        <div className="mt-6 flex justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+          >
+            知道了
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
