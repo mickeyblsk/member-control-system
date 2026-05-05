@@ -18,8 +18,5 @@ export async function loginService(
 
   const data: LoginResponse = await res.json();
 
-  // UI cache
-  sessionStorage.setItem("user", JSON.stringify(data.user));
-
   return data.user;
 }

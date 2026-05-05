@@ -1,5 +1,7 @@
 export interface Member {
-  id: number;
   name: string;
+  phone: string;
+  address: string;
   email: string;
+  birthday: Date | null;
 }
