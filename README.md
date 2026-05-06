@@ -12,18 +12,23 @@ Next.js App Router と TypeScript を使用して構築された会員管理シ�
 固定帳號（目前寫死）：
 
 帳號：admin
+
 密碼：demo
 
 固定アカウント（現在はハードコードされています）：
+
 アカウント：admin
+
 パスワード：demo
 
 # 環境需求
 
 請先安裝以下環境：
+
 以下の環境を事前にインストールしてください：
 
 Node.js: v24.15.0
+
 npm: 11.12.1
 
 # 技術棧 技術スタック
@@ -55,6 +60,7 @@ npm run dev
 瀏覽器進入：
 http://localhost:3000
 
+
 1. 依存関係のインストール
 npm install
 2. 開発環境の起動
@@ -66,6 +72,7 @@ http://localhost:3000
 # 登入方式 ログイン方法
 
 進入系統後，使用以下帳號登入：
+
 システムにアクセス後、以下のアカウントでログインしてください：
 
 admin / demo
@@ -111,7 +118,7 @@ demo 端點使用 in-memory store（app/api/customers/demo/_store.ts），
 # 專案架構（簡化版）プロジェクト構成（簡略版）
 app/
  ├─ layout.tsx                       → 全域 layout 全体レイアウト
- ├─ providers.tsx                    → React Query / Toaster / Loading overlay
+ ├─ providers.tsx                    → I18nProvider / React Query / Toaster / Loading overlay
  ├─ page.tsx                         → redirect to /login
  ├─ login/page.tsx                   → 登入頁 ログイン画面
  ├─ customers/page.tsx               → 會員列表 + CRUD modal + CSV 匯入入口
@@ -131,7 +138,8 @@ app/
              ├─ [id]/route.ts        → demo PUT / DELETE
              └─ import/route.ts      → demo 批次匯入 一括インポート
 components/
- └─ GlobalLoadingOverlay.tsx         → 全域 loading 遮罩 グローバルローディング
+ ├─ GlobalLoadingOverlay.tsx         → 全域 loading 遮罩 グローバルローディング
+ └─ LanguageSwitcher.tsx             → 語系切換按鈕 言語切替ボタン
 hooks/
  └─ useCustomers.ts                  → React Query CRUD + import mutations
 services/
@@ -139,7 +147,10 @@ services/
  └─ customerService.ts               → customer 前端 API 呼叫（目前固定打 demo 路徑）
 lib/
  ├─ serverRequest.ts                 → server API wrapper
- └─ customerMapper.ts                → API ↔ client 型別轉換（birthday string ↔ Date）
+ ├─ customerMapper.ts                → API ↔ client 型別轉換（birthday string ↔ Date）
+ └─ i18n/
+     ├─ dictionaries.ts              → 中／日字典 + 語系常數 中／日辞書 + ロケール定数
+     └─ I18nProvider.tsx             → I18n Context + useT() hook
 types/
  ├─ auth.ts
  └─ customer.ts                      → CustomerType / CustomerResponse / CustomerSeed
@@ -211,6 +222,48 @@ invalidateQueries(["customers"]) が呼ばれ、一覧は自動的に refetch �
 - demo/demo_customer.csv — 全行正常
 - demo/demo_customer_crash.csv — 不正なフォーマット、エラー表示確認用
 
+# 多語系 (i18n) 多言語対応
+
+【支援語系】
+- zh-Hant（繁體中文，預設）— UI 顯示為「中文」
+- ja（日本語）— UI 顯示為「日本語」
+
+【實作方式】
+- React Context provider lib/i18n/I18nProvider.tsx 提供 useT() / useI18n() hook，整個 App 在 app/providers.tsx 最外層被 I18nProvider 包起來
+- 字典定義在 lib/i18n/dictionaries.ts，採巢狀 key（如 customers.confirmDelete），支援 {{var}} 內插（如 {{name}} / {{n}}）
+- 使用者選擇 persist 在 localStorage（key：app_locale），並同步更新 <html lang> 屬性
+- 沒有額外引入 i18n 套件，純 React Context 實作
+
+【切換入口】
+LanguageSwitcher 元件（components/LanguageSwitcher.tsx）已放在：
+- 登入頁右上角（app/login/page.tsx）
+- 會員列表頁標題列右側（app/customers/page.tsx）
+
+【新增語系步驟】
+- 在 lib/i18n/dictionaries.ts 的 SUPPORTED_LOCALES 陣列加入新 locale code
+- 在 LOCALE_LABELS 補上 UI 顯示名稱
+- 在 dictionaries 物件補一份對應語系的完整字典（key 結構需與既有語系一致）
+
+【対応言語】
+- zh-Hant（繁体中文、デフォルト）— UI では「中文」と表示
+- ja（日本語）— UI では「日本語」と表示
+
+【実装方法】
+- React Context プロバイダ lib/i18n/I18nProvider.tsx が useT() / useI18n() フックを提供し、app/providers.tsx の最外層で I18nProvider がアプリ全体をラップしています
+- 辞書は lib/i18n/dictionaries.ts に定義され、ネストキー（例：customers.confirmDelete）と {{var}} 補間（例：{{name}} / {{n}}）に対応しています
+- ユーザーの選択は localStorage（キー：app_locale）に保存され、<html lang> 属性も同時に更新されます
+- i18n ライブラリは追加せず、React Context のみで実装しています
+
+【切替入口】
+LanguageSwitcher コンポーネント（components/LanguageSwitcher.tsx）は以下に配置されています：
+- ログインページの右上（app/login/page.tsx）
+- 会員一覧ページのタイトル右側（app/customers/page.tsx）
+
+【新しい言語の追加手順】
+- lib/i18n/dictionaries.ts の SUPPORTED_LOCALES 配列に新しい locale code を追加
+- LOCALE_LABELS に UI 表示名を追加
+- dictionaries オブジェクトに対応言語のフル辞書を追加（既存言語と同じキー構造）
+
 # 登入機制 ログイン仕組み
 token 存在 cookie（demo 為 httpOnly: false）
 user data 存在 sessionStorage（前端快取）
@@ -241,6 +294,7 @@ cookie 未做 httpOnly 強化（僅 demo 用）
 Customer demo 資料只存在 process 記憶體，重啟伺服器即清空
 前端目前固定走 demo 路徑，正式 API 尚未在 UI 串接
 CSV 解析在前端 client-side 完成，沒有使用第三方套件
+多語系切換為 client-side，使用者選擇存在 localStorage（app_locale），SSR 階段預設為 zh-Hant
 
 本プロジェクトはデモのため、一部のAPIはモックデータを使用しています
 ログイン認証は現在 admin / demo に固定されています
@@ -248,3 +302,4 @@ Cookie は httpOnly の強化がされていません（デモ用途のみ）
 Customer のデモデータはプロセスメモリ上にのみ保持され、サーバー再起動でリセットされます
 フロントエンドは現状デモ用パスに固定で接続されており、本番 API は UI に未接続です
 CSV の解析はフロントエンド側で行っており、サードパーティライブラリは使用していません
+多言語切替はクライアントサイドで、ユーザーの選択は localStorage（app_locale）に保存されます。SSR 時は zh-Hant がデフォルトです
