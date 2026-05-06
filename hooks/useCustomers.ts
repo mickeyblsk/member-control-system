@@ -14,6 +14,7 @@ import {
   updateCustomer,
 } from "@/services/customerService";
 import { CustomerType } from "@/types/customer";
+import { useT } from "@/lib/i18n/I18nProvider";
 
 const QUERY_KEY = ["customers"] as const;
 
@@ -26,37 +27,45 @@ export function useCustomersQuery() {
 
 export function useCreateCustomerMutation() {
   const qc = useQueryClient();
+  const t = useT();
   return useMutation({
     mutationFn: createCustomer,
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
-    onError: (err) => toast.error(`新增香客失敗: ${String(err)}`),
+    onError: (err) =>
+      toast.error(`${t("customers.mutationCreateFailed")}: ${String(err)}`),
   });
 }
 
 export function useUpdateCustomerMutation() {
   const qc = useQueryClient();
+  const t = useT();
   return useMutation({
     mutationFn: updateCustomer,
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
-    onError: (err) => toast.error(`更新香客失敗: ${String(err)}`),
+    onError: (err) =>
+      toast.error(`${t("customers.mutationUpdateFailed")}: ${String(err)}`),
   });
 }
 
 export function useDeleteCustomerMutation() {
   const qc = useQueryClient();
+  const t = useT();
   return useMutation({
     mutationFn: (id: number) => deleteCustomer(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
-    onError: (err) => toast.error(`刪除香客失敗: ${String(err)}`),
+    onError: (err) =>
+      toast.error(`${t("customers.mutationDeleteFailed")}: ${String(err)}`),
   });
 }
 
 export function useImportCustomersMutation() {
   const qc = useQueryClient();
+  const t = useT();
   return useMutation({
     mutationFn: importCustomers,
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
-    onError: (err) => toast.error(`匯入失敗: ${String(err)}`),
+    onError: (err) =>
+      toast.error(`${t("customers.mutationImportFailed")}: ${String(err)}`),
   });
 }
 

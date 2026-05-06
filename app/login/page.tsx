@@ -3,11 +3,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginService } from "@/services/loginService";
+import { useT } from "@/lib/i18n/I18nProvider";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const STORAGE_KEY = "login_saved_accounts";
 
 export default function LoginPage() {
   const router = useRouter();
+  const t = useT();
 
   const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
@@ -59,7 +62,7 @@ export default function LoginPage() {
 
   const login = async () => {
     if (!account || !password) {
-      alert("請輸入帳號與密碼");
+      alert(t("login.missingCredentials"));
       return;
     }
     if (rememberAccount) saveAccount(account);
@@ -69,7 +72,7 @@ export default function LoginPage() {
       await loginService(account, password);
       router.replace("/customers");
     } catch (e) {
-      alert(`登入失敗: ${e}`);
+      alert(`${t("login.failed")}: ${e}`);
     } finally {
       setLoading(false);
     }
@@ -89,9 +92,14 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen w-full items-center justify-center bg-pri/10 px-4">
+    <main className="relative flex min-h-screen w-full items-center justify-center bg-pri/10 px-4">
+      <div className="absolute right-4 top-4">
+        <LanguageSwitcher />
+      </div>
       <div className="flex w-full max-w-sm flex-col gap-5 rounded-xl border border-pri/10 bg-white/80 p-8 shadow-xl backdrop-blur">
-        <h1 className="text-center text-2xl font-bold text-pri">會員管理系統</h1>
+        <h1 className="text-center text-2xl font-bold text-pri">
+          {t("common.appTitle")}
+        </h1>
 
         <div className="relative w-full">
           <div
@@ -108,20 +116,20 @@ export default function LoginPage() {
             onKeyDown={handleAccountKeydown}
             spellCheck={false}
             autoComplete="off"
-            placeholder="請輸入帳號"
+            placeholder={t("login.accountPlaceholder")}
             className="relative w-full rounded-md border border-pri/20 bg-transparent px-3 py-2 text-base outline-none focus:border-pri"
           />
           {suggestionSuffix && (
             <p className="mt-1 text-xs text-zinc-500">
-              按{" "}
+              {t("login.autocompleteHintBefore")}{" "}
               <kbd className="rounded border border-zinc-300 bg-zinc-100 px-1 py-px text-[10px]">
                 Tab
               </kbd>{" "}
-              或{" "}
+              {t("login.autocompleteHintMiddle")}{" "}
               <kbd className="rounded border border-zinc-300 bg-zinc-100 px-1 py-px text-[10px]">
                 →
               </kbd>{" "}
-              補全
+              {t("login.autocompleteHintAfter")}
             </p>
           )}
         </div>
@@ -133,13 +141,15 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             onKeyDown={handlePasswordKeydown}
-            placeholder="請輸入密碼"
+            placeholder={t("login.passwordPlaceholder")}
             className="w-full rounded-md border border-pri/20 bg-transparent px-3 py-2 pr-10 text-base outline-none focus:border-pri"
           />
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            aria-label={showPassword ? "隱藏密碼" : "顯示密碼"}
+            aria-label={
+              showPassword ? t("login.hidePassword") : t("login.showPassword")
+            }
             className="absolute right-2 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center text-pri/40 transition-colors hover:text-pri"
           >
             {showPassword ? <EyeOffIcon /> : <EyeIcon />}
@@ -153,7 +163,7 @@ export default function LoginPage() {
             onChange={(e) => setRememberAccount(e.target.checked)}
             className="h-4 w-4 cursor-pointer accent-[var(--color-pri)]"
           />
-          記住帳號
+          {t("login.rememberAccount")}
         </label>
 
         <button
@@ -162,7 +172,7 @@ export default function LoginPage() {
           disabled={loading}
           className="w-full rounded-lg border-2 border-sec bg-pri py-3 text-base text-sec transition hover:bg-pri/90 disabled:opacity-50"
         >
-          {loading ? "登入中..." : "登入系統"}
+          {loading ? t("login.submitting") : t("login.submit")}
         </button>
       </div>
     </main>

@@ -10,6 +10,13 @@ import {
   useUpdateCustomerMutation,
 } from "@/hooks/useCustomers";
 import { CustomerSeed, CustomerType } from "@/types/customer";
+import { useT } from "@/lib/i18n/I18nProvider";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+
+type Translator = (
+  path: string,
+  vars?: Record<string, string | number>
+) => string;
 
 const formatBirthday = (d: Date | null): string =>
   d ? d.toISOString().split("T")[0] : "";
@@ -20,6 +27,7 @@ type ModalState =
   | { open: true; mode: "edit"; initial: CustomerType };
 
 export default function CustomersPage() {
+  const t = useT();
   const { data, isLoading, isError, error } = useCustomersQuery();
   const deleteMutation = useDeleteCustomerMutation();
   const importMutation = useImportCustomersMutation();
@@ -80,7 +88,7 @@ export default function CustomersPage() {
   }, [currentPage, totalPages]);
 
   const handleDelete = (c: CustomerType) => {
-    if (!window.confirm(`確定刪除 ${c.name}？`)) return;
+    if (!window.confirm(t("customers.confirmDelete", { name: c.name }))) return;
     deleteMutation.mutate(c.id);
   };
 
@@ -95,11 +103,11 @@ export default function CustomersPage() {
     try {
       text = await file.text();
     } catch (err) {
-      toast.error(`讀取檔案失敗: ${String(err)}`);
+      toast.error(`${t("customers.readFileFailed")}: ${String(err)}`);
       return;
     }
 
-    const result = parseCustomerCsv(text);
+    const result = parseCustomerCsv(text, t);
     if (result.errors.length > 0) {
       setImportErrors(result.errors);
       return;
@@ -107,7 +115,7 @@ export default function CustomersPage() {
 
     try {
       const { imported } = await importMutation.mutateAsync(result.rows);
-      toast.success(`匯入成功，共 ${imported} 筆`);
+      toast.success(t("customers.importSuccess", { n: imported }));
     } catch {
       // toast 已由 mutation onError 處理
     }
@@ -127,21 +135,26 @@ export default function CustomersPage() {
   return (
     <main className="flex flex-1 flex-col gap-4 p-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-pri">會員列表</h1>
-        <div className="flex gap-2">
+        <h1 className="text-2xl font-semibold text-pri">
+          {t("customers.title")}
+        </h1>
+        <div className="flex items-center gap-2">
           <button
             onClick={handleImportClick}
             disabled={importMutation.isPending}
             className="rounded-md border border-pri/20 bg-white/70 px-4 py-2 text-pri transition hover:bg-pri/5 disabled:opacity-50"
           >
-            {importMutation.isPending ? "匯入中..." : "匯入 CSV"}
+            {importMutation.isPending
+              ? t("customers.importing")
+              : t("customers.importCsv")}
           </button>
           <button
             onClick={() => setModal({ open: true, mode: "create", initial: null })}
             className="rounded-md bg-pri px-4 py-2 text-white shadow-sm transition hover:bg-pri/90"
           >
-            + 新增會員
+            {t("customers.addMember")}
           </button>
+          <LanguageSwitcher className="ml-2" />
         </div>
       </div>
 
@@ -158,7 +171,7 @@ export default function CustomersPage() {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="搜尋姓名、電話、地址、Email..."
+          placeholder={t("customers.searchPlaceholder")}
           className="w-64 rounded-md border border-pri/20 bg-white px-3 py-2 outline-none focus:border-pri"
         />
         <div className="flex items-center gap-3 text-pri/80">
@@ -167,19 +180,21 @@ export default function CustomersPage() {
             onChange={(e) => setItemsPerPage(Number(e.target.value))}
             className="rounded-md border border-pri/20 bg-transparent px-2 py-1 outline-none"
           >
-            <option value={10}>10 筆 / 頁</option>
-            <option value={20}>20 筆 / 頁</option>
-            <option value={50}>50 筆 / 頁</option>
-            <option value={100}>100 筆 / 頁</option>
+            <option value={10}>{t("customers.perPage", { n: 10 })}</option>
+            <option value={20}>{t("customers.perPage", { n: 20 })}</option>
+            <option value={50}>{t("customers.perPage", { n: 50 })}</option>
+            <option value={100}>{t("customers.perPage", { n: 100 })}</option>
           </select>
-          <span>共 {totalItems} 筆</span>
+          <span>{t("customers.totalItems", { n: totalItems })}</span>
         </div>
       </div>
 
-      {isLoading && <p className="text-pri/70">載入中...</p>}
+      {isLoading && <p className="text-pri/70">{t("common.loading")}</p>}
 
       {isError && (
-        <p className="text-red-600">載入失敗: {String(error)}</p>
+        <p className="text-red-600">
+          {t("customers.loadFailed")}: {String(error)}
+        </p>
       )}
 
       {data && (
@@ -188,13 +203,27 @@ export default function CustomersPage() {
             <table className="min-w-full text-left">
               <thead className="bg-pri/10 text-pri">
                 <tr>
-                  <th className="px-4 py-3 font-semibold">序號</th>
-                  <th className="px-4 py-3 font-semibold">姓名</th>
-                  <th className="px-4 py-3 font-semibold">電話</th>
-                  <th className="px-4 py-3 font-semibold">地址</th>
-                  <th className="px-4 py-3 font-semibold">Email</th>
-                  <th className="px-4 py-3 font-semibold">生日</th>
-                  <th className="px-4 py-3 font-semibold">操作</th>
+                  <th className="px-4 py-3 font-semibold">
+                    {t("customers.colIndex")}
+                  </th>
+                  <th className="px-4 py-3 font-semibold">
+                    {t("customers.colName")}
+                  </th>
+                  <th className="px-4 py-3 font-semibold">
+                    {t("customers.colPhone")}
+                  </th>
+                  <th className="px-4 py-3 font-semibold">
+                    {t("customers.colAddress")}
+                  </th>
+                  <th className="px-4 py-3 font-semibold">
+                    {t("customers.colEmail")}
+                  </th>
+                  <th className="px-4 py-3 font-semibold">
+                    {t("customers.colBirthday")}
+                  </th>
+                  <th className="px-4 py-3 font-semibold">
+                    {t("customers.colActions")}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -204,7 +233,9 @@ export default function CustomersPage() {
                       colSpan={7}
                       className="px-4 py-10 text-center text-pri/50"
                     >
-                      {searchQuery ? "沒有符合搜尋條件的資料" : "目前沒有資料"}
+                      {searchQuery
+                        ? t("customers.noMatch")
+                        : t("customers.noData")}
                     </td>
                   </tr>
                 ) : (
@@ -240,14 +271,14 @@ export default function CustomersPage() {
                             }
                             className="rounded bg-pri/10 px-3 py-1 text-pri transition hover:bg-pri hover:text-white"
                           >
-                            修改
+                            {t("customers.edit")}
                           </button>
                           <button
                             onClick={() => handleDelete(c)}
                             disabled={deleteMutation.isPending}
                             className="rounded bg-red-100 px-3 py-1 text-red-600 transition hover:bg-red-500 hover:text-white disabled:opacity-50"
                           >
-                            刪除
+                            {t("customers.delete")}
                           </button>
                         </div>
                       </td>
@@ -264,14 +295,14 @@ export default function CustomersPage() {
                 <PageBtn
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage(1)}
-                  aria-label="第一頁"
+                  aria-label={t("customers.pageFirst")}
                 >
                   «
                 </PageBtn>
                 <PageBtn
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  aria-label="上一頁"
+                  aria-label={t("customers.pagePrev")}
                 >
                   ‹
                 </PageBtn>
@@ -289,20 +320,20 @@ export default function CustomersPage() {
                   onClick={() =>
                     setCurrentPage((p) => Math.min(totalPages, p + 1))
                   }
-                  aria-label="下一頁"
+                  aria-label={t("customers.pageNext")}
                 >
                   ›
                 </PageBtn>
                 <PageBtn
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage(totalPages)}
-                  aria-label="最後一頁"
+                  aria-label={t("customers.pageLast")}
                 >
                   »
                 </PageBtn>
               </div>
               <div className="flex items-center gap-2 text-sm text-pri/70">
-                <span>跳至</span>
+                <span>{t("customers.jumpTo")}</span>
                 <input
                   type="number"
                   value={jumpInput}
@@ -316,7 +347,7 @@ export default function CustomersPage() {
                   placeholder={String(currentPage)}
                   className="w-16 rounded-md border border-pri/20 bg-white px-2 py-1 text-center outline-none focus:border-pri [appearance:textfield] [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none"
                 />
-                <span>頁 / 共 {totalPages} 頁</span>
+                <span>{t("customers.pageOfTotal", { n: totalPages })}</span>
               </div>
             </div>
           )}
@@ -376,12 +407,13 @@ function PageBtn({
 const REQUIRED_HEADERS = ["name", "phone", "address", "email", "birthday"] as const;
 
 function parseCustomerCsv(
-  text: string
+  text: string,
+  t: Translator
 ): { rows: CustomerSeed[]; errors: string[] } {
   const errors: string[] = [];
   const cleaned = text.replace(/^﻿/, "").trim();
   if (!cleaned) {
-    return { rows: [], errors: ["CSV 內容為空"] };
+    return { rows: [], errors: [t("customers.csvEmpty")] };
   }
 
   const lines = cleaned.split(/\r?\n/);
@@ -391,17 +423,21 @@ function parseCustomerCsv(
     return {
       rows: [],
       errors: [
-        `表頭缺少欄位: ${missing.join(", ")} (實際表頭: ${headers.join(", ")})`,
+        t("customers.csvHeaderMissing", {
+          missing: missing.join(", "),
+          actual: headers.join(", "),
+        }),
       ],
     };
   }
 
   const dataLines = lines.slice(1).filter((l) => l.trim() !== "");
   if (dataLines.length === 0) {
-    return { rows: [], errors: ["CSV 沒有任何資料列"] };
+    return { rows: [], errors: [t("customers.csvNoRows")] };
   }
 
   const rows: CustomerSeed[] = [];
+  const rowJoin = t("customers.csvRowJoin");
   dataLines.forEach((line, idx) => {
     const lineNo = idx + 1;
     const values = line.split(",").map((s) => s.trim());
@@ -409,18 +445,25 @@ function parseCustomerCsv(
     headers.forEach((h, i) => (obj[h] = values[i] ?? ""));
 
     const rowErrors: string[] = [];
-    if (!obj.name) rowErrors.push("姓名為必填");
+    if (!obj.name) rowErrors.push(t("customers.requiredName"));
     if (obj.birthday && !/^\d{4}-\d{2}-\d{2}$/.test(obj.birthday)) {
-      rowErrors.push(`生日格式應為 YYYY-MM-DD (實際: ${obj.birthday})`);
+      rowErrors.push(
+        t("customers.csvBirthdayFormat", { value: obj.birthday })
+      );
     }
     if (values.length !== headers.length) {
       rowErrors.push(
-        `欄位數不符 (應 ${headers.length}, 實際 ${values.length})`
+        t("customers.csvFieldCount", {
+          expected: headers.length,
+          actual: values.length,
+        })
       );
     }
 
     if (rowErrors.length > 0) {
-      errors.push(`第 ${lineNo} 列: ${rowErrors.join("；")}`);
+      errors.push(
+        `${t("customers.csvRowPrefix", { n: lineNo })}: ${rowErrors.join(rowJoin)}`
+      );
       return;
     }
 
@@ -443,12 +486,15 @@ function ImportErrorModal({
   errors: string[];
   onClose: () => void;
 }) {
+  const t = useT();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
-        <h2 className="mb-2 text-xl font-semibold text-pri">匯入失敗</h2>
+        <h2 className="mb-2 text-xl font-semibold text-pri">
+          {t("customers.importFailedTitle")}
+        </h2>
         <p className="mb-4 text-sm text-pri/70">
-          以下 {errors.length} 筆資料有問題，整批未匯入。請修正後重試。
+          {t("customers.importFailedDesc", { n: errors.length })}
         </p>
         <ul className="max-h-80 list-disc overflow-y-auto pl-6 text-sm text-pri">
           {errors.map((err, i) => (
@@ -463,7 +509,7 @@ function ImportErrorModal({
             onClick={onClose}
             className="rounded-md bg-pri px-4 py-2 text-white transition hover:bg-pri/90"
           >
-            知道了
+            {t("common.ack")}
           </button>
         </div>
       </div>
@@ -504,6 +550,7 @@ function CustomerFormModal({
   initial: CustomerType | null;
   onClose: () => void;
 }) {
+  const t = useT();
   const createMutation = useCreateCustomerMutation();
   const updateMutation = useUpdateCustomerMutation();
 
@@ -515,7 +562,7 @@ function CustomerFormModal({
 
   const submit = async () => {
     if (!form.name.trim()) {
-      alert("姓名為必填");
+      alert(t("customers.requiredName"));
       return;
     }
 
@@ -549,32 +596,34 @@ function CustomerFormModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
         <h2 className="mb-4 text-xl font-semibold text-pri">
-          {mode === "edit" ? "修改會員" : "新增會員"}
+          {mode === "edit"
+            ? t("customers.formEditTitle")
+            : t("customers.formCreateTitle")}
         </h2>
 
         <div className="flex flex-col gap-3">
-          <FormField label="姓名">
+          <FormField label={t("customers.colName")}>
             <input
               value={form.name}
               onChange={update("name")}
               className="w-full rounded-md border border-pri/20 px-3 py-2 outline-none focus:border-pri"
             />
           </FormField>
-          <FormField label="電話">
+          <FormField label={t("customers.colPhone")}>
             <input
               value={form.phone}
               onChange={update("phone")}
               className="w-full rounded-md border border-pri/20 px-3 py-2 outline-none focus:border-pri"
             />
           </FormField>
-          <FormField label="地址">
+          <FormField label={t("customers.colAddress")}>
             <input
               value={form.address}
               onChange={update("address")}
               className="w-full rounded-md border border-pri/20 px-3 py-2 outline-none focus:border-pri"
             />
           </FormField>
-          <FormField label="Email">
+          <FormField label={t("customers.colEmail")}>
             <input
               type="email"
               value={form.email}
@@ -582,7 +631,7 @@ function CustomerFormModal({
               className="w-full rounded-md border border-pri/20 px-3 py-2 outline-none focus:border-pri"
             />
           </FormField>
-          <FormField label="生日">
+          <FormField label={t("customers.colBirthday")}>
             <input
               type="date"
               value={form.birthday}
@@ -599,7 +648,7 @@ function CustomerFormModal({
             disabled={submitting}
             className="rounded-md border border-pri/20 px-4 py-2 text-pri transition hover:bg-pri/5 disabled:opacity-50"
           >
-            取消
+            {t("common.cancel")}
           </button>
           <button
             type="button"
@@ -607,7 +656,7 @@ function CustomerFormModal({
             disabled={submitting}
             className="rounded-md bg-pri px-4 py-2 text-white transition hover:bg-pri/90 disabled:opacity-50"
           >
-            {submitting ? "處理中..." : "確定"}
+            {submitting ? t("common.processing") : t("common.confirm")}
           </button>
         </div>
       </div>
