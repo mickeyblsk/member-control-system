@@ -2,7 +2,7 @@
 
 import { useT } from "@/lib/i18n/I18nProvider";
 
-export default function ImportErrorModal({
+export default function ImportErrorModalClient({
   errors,
   onClose,
 }: {

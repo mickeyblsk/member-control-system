@@ -1,4 +1,5 @@
 import { CustomerInput } from "@/types/customer";
+import { isValidBirthday, isValidName } from "../_lib/validation";
 
 export type Translator = (
   path: string,
@@ -6,7 +7,6 @@ export type Translator = (
 ) => string;
 
 const REQUIRED_HEADERS = ["name", "phone", "address", "email", "birthday"] as const;
-const BIRTHDAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export type ParseResult = {
   rows: CustomerInput[];
@@ -50,8 +50,8 @@ export function parseCustomerCsv(text: string, t: Translator): ParseResult {
     headers.forEach((h, i) => (obj[h] = values[i] ?? ""));
 
     const rowErrors: string[] = [];
-    if (!obj.name) rowErrors.push(t("customers.requiredName"));
-    if (obj.birthday && !BIRTHDAY_RE.test(obj.birthday)) {
+    if (!isValidName(obj.name)) rowErrors.push(t("customers.requiredName"));
+    if (!isValidBirthday(obj.birthday)) {
       rowErrors.push(
         t("customers.csvBirthdayFormat", { value: obj.birthday })
       );

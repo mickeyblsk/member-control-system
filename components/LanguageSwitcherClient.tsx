@@ -8,7 +8,7 @@ import {
 } from "@/lib/i18n/dictionaries";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
-export default function LanguageSwitcher({
+export default function LanguageSwitcherClient({
   className = "",
 }: {
   className?: string;

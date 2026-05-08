@@ -34,7 +34,7 @@ const wrapAction = (
   };
 };
 
-export default function CustomerFormModal({
+export default function CustomerFormModalClient({
   mode,
   initial,
   onClose,

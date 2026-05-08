@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
+import LanguageSwitcherClient from "@/components/LanguageSwitcherClient";
 import { Customer } from "@/types/customer";
 import { useT } from "@/lib/i18n/I18nProvider";
 import {
@@ -10,8 +10,8 @@ import {
   importCustomersAction,
 } from "../actions";
 import { logoutAction } from "../../login/actions";
-import CustomerFormModal from "./CustomerFormModal";
-import ImportErrorModal from "./ImportErrorModal";
+import CustomerFormModalClient from "./CustomerFormModalClient";
+import ImportErrorModalClient from "./ImportErrorModalClient";
 import { parseCustomerCsv } from "./parseCsv";
 
 type ModalState =
@@ -137,7 +137,7 @@ export default function CustomersClient({
           {t("customers.title")}
         </h1>
         <div className="flex items-center gap-2">
-          <LanguageSwitcher className="ml-2" />
+          <LanguageSwitcherClient className="ml-2" />
           <button
             type="button"
             onClick={handleImportClick}
@@ -361,7 +361,7 @@ export default function CustomersClient({
       </div>
 
       {modal.open && (
-        <CustomerFormModal
+        <CustomerFormModalClient
           mode={modal.mode}
           initial={modal.initial}
           onClose={() => setModal({ open: false })}
@@ -369,7 +369,7 @@ export default function CustomersClient({
       )}
 
       {importErrors && (
-        <ImportErrorModal
+        <ImportErrorModalClient
           errors={importErrors}
           onClose={() => setImportErrors(null)}
         />

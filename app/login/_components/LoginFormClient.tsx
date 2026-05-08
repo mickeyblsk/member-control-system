@@ -7,7 +7,7 @@ import { loginAction, type LoginState } from "../actions";
 const SAVED_ACCOUNTS_KEY = "login_saved_accounts";
 const INITIAL_STATE: LoginState = {};
 
-export default function LoginForm() {
+export default function LoginFormClient() {
   const t = useT();
   const [state, formAction, pending] = useActionState(loginAction, INITIAL_STATE);
 
