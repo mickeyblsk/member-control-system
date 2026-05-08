@@ -1,10 +1,6 @@
 import { CustomerInput } from "@/types/customer";
+import type { Translator } from "@/lib/i18n/I18nProvider";
 import { isValidBirthday, isValidName } from "../_lib/validation";
-
-export type Translator = (
-  path: string,
-  vars?: Record<string, string | number>
-) => string;
 
 const REQUIRED_HEADERS = ["name", "phone", "address", "email", "birthday"] as const;
 

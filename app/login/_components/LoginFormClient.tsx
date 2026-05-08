@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { useT } from "@/lib/i18n/I18nProvider";
-import { loginAction, type LoginState } from "../actions";
+import { loginAction, type LoginState } from "@/lib/auth/actions";
 
 const SAVED_ACCOUNTS_KEY = "login_saved_accounts";
 const INITIAL_STATE: LoginState = {};

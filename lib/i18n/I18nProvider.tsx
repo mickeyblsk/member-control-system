@@ -19,11 +19,16 @@ import {
 
 const STORAGE_KEY = "app_locale";
 
+export type Translator = (
+  path: string,
+  vars?: Record<string, string | number>
+) => string;
+
 type I18nContextValue = {
   locale: Locale;
   setLocale: (l: Locale) => void;
   dict: Dictionary;
-  t: (path: string, vars?: Record<string, string | number>) => string;
+  t: Translator;
 };
 
 const I18nContext = createContext<I18nContextValue | null>(null);

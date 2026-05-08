@@ -111,7 +111,6 @@ app/
  ├─ page.tsx                         → redirect("/login")
  ├─ login/
  │   ├─ page.tsx                     → 已登入則 redirect /customers
- │   ├─ actions.ts                   → loginAction / logoutAction (Server Actions)
  │   └─ _components/
  │       └─ LoginFormClient.tsx      → 登入表單 (Client Component)
  └─ customers/
@@ -135,12 +134,13 @@ components/
  └─ LanguageSwitcherClient.tsx       → 語系切換按鈕 (Client)
 
 lib/
+ ├─ auth/
+ │   └─ actions.ts                   → loginAction / logoutAction (Server Actions)
  └─ i18n/
      ├─ dictionaries.ts              → 中／日字典 + 語系常數
-     └─ I18nProvider.tsx             → I18n Context + useT() hook (Client)
+     └─ I18nProvider.tsx             → I18n Context + useT() hook + Translator type (Client)
 
 types/
- ├─ auth.ts                          → User / LoginResponse
  └─ customer.ts                      → Customer / CustomerDTO / CustomerInput
 
 demo/

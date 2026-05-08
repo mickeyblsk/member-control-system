@@ -9,7 +9,7 @@ import {
   deleteCustomerAction,
   importCustomersAction,
 } from "../actions";
-import { logoutAction } from "../../login/actions";
+import { logoutAction } from "@/lib/auth/actions";
 import CustomerFormModalClient from "./CustomerFormModalClient";
 import ImportErrorModalClient from "./ImportErrorModalClient";
 import { parseCustomerCsv } from "./parseCsv";

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useT } from "@/lib/i18n/I18nProvider";
 
-export default function CustomersError({
+export default function CustomersErrorClient({
   error,
   reset,
 }: {
