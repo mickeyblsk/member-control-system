@@ -1,4 +1,4 @@
-export interface CustomerType {
+export interface Customer {
   id: number;
   name: string;
   phone: string;
@@ -7,7 +7,7 @@ export interface CustomerType {
   birthday: Date | null;
 }
 
-export interface CustomerResponse {
+export interface CustomerDTO {
   id: number;
   name: string;
   phone: string;
@@ -16,4 +16,4 @@ export interface CustomerResponse {
   birthday: string | null;
 }
 
-export type CustomerSeed = Omit<CustomerResponse, "id">;
+export type CustomerInput = Omit<CustomerDTO, "id">;

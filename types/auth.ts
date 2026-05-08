@@ -1,12 +1,12 @@
-export interface LoginUser {
+export interface User {
   id: number;
-  name: string;
-  display_name: string | null;
+  username: string;
+  displayName: string | null;
   permissions: number;
-  temple_id: string;
+  templeId: string;
 }
 
 export interface LoginResponse {
   secret: string;
-  user: LoginUser;
+  user: User;
 }

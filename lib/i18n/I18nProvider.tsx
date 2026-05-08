@@ -60,6 +60,8 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
+      // localStorage is a browser-only external store; sync once on mount.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (isLocale(saved)) setLocaleState(saved);
     } catch {
       // ignore

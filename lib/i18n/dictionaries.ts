@@ -17,6 +17,7 @@ export const dictionaries = {
       loading: "載入中...",
       ack: "知道了",
       languageLabel: "語言",
+      logout: "登出",
     },
     login: {
       accountPlaceholder: "請輸入帳號",
@@ -66,6 +67,7 @@ export const dictionaries = {
       formCreateTitle: "新增會員",
       formEditTitle: "修改會員",
       requiredName: "姓名為必填",
+      birthdayFormat: "生日格式應為 YYYY-MM-DD",
       mutationCreateFailed: "新增會員失敗",
       mutationUpdateFailed: "更新會員失敗",
       mutationDeleteFailed: "刪除會員失敗",
@@ -88,6 +90,7 @@ export const dictionaries = {
       loading: "読み込み中...",
       ack: "了解しました",
       languageLabel: "言語",
+      logout: "ログアウト",
     },
     login: {
       accountPlaceholder: "アカウントを入力してください",
@@ -138,6 +141,7 @@ export const dictionaries = {
       formCreateTitle: "会員を追加",
       formEditTitle: "会員を編集",
       requiredName: "名前は必須です",
+      birthdayFormat: "誕生日の形式は YYYY-MM-DD です",
       mutationCreateFailed: "会員の追加に失敗しました",
       mutationUpdateFailed: "会員の更新に失敗しました",
       mutationDeleteFailed: "会員の削除に失敗しました",
